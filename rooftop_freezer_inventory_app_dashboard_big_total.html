@@ -1,0 +1,1547 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>屋上冷凍ストッカー在庫管理アプリ</title>
+  <style>
+    :root{
+      --bg:#f6f7fb; --card:#ffffff; --line:#e5e7ef; --text:#1f2937; --muted:#6b7280;
+      --primary:#1d4ed8; --primary2:#2563eb; --danger:#dc2626; --warn:#d97706; --ok:#059669;
+      --fz1-bg:#eff6ff; --fz1-accent:#2563eb; --fz1-text:#1d4ed8;
+      --fz2-bg:#ecfdf5; --fz2-accent:#059669; --fz2-text:#047857;
+      --fz3-bg:#fff7ed; --fz3-accent:#ea580c; --fz3-text:#c2410c;
+      --fz4-bg:#f5f3ff; --fz4-accent:#7c3aed; --fz4-text:#6d28d9;
+      --s1:var(--fz1-bg); --s2:var(--fz4-bg); --s3:var(--fz2-bg); --s4:var(--fz3-bg);
+      --shadow:0 10px 30px rgba(0,0,0,.08); --radius:18px;
+    }
+    *{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Yu Gothic UI",sans-serif;background:var(--bg);color:var(--text)}
+    button,input,select,textarea{font:inherit} .app{max-width:980px;margin:0 auto;padding:16px 16px 110px}
+    .header{position:sticky;top:0;z-index:50;background:rgba(246,247,251,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);margin:0 -16px 16px;padding:14px 16px}
+    .header-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+    .title{font-size:24px;font-weight:800;margin:0} .sub{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.6}
+    .role-chip{padding:10px 14px;border-radius:999px;background:#fff;border:1px solid var(--line);box-shadow:var(--shadow);font-size:12px;font-weight:700}
+    .grid{display:grid;gap:14px} .grid.kpis{grid-template-columns:repeat(4,1fr)}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+    .hero{padding:18px;background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff}
+    .hero h2{margin:0;font-size:18px} .hero p{margin:6px 0 0;font-size:12px;line-height:1.7;opacity:.9}
+    .kpi{padding:16px}.kpi .label{font-size:12px;color:var(--muted)} .kpi .value{font-size:30px;font-weight:800;margin-top:8px}
+    .kpi.alert .value{color:var(--danger)} .kpi.warn .value{color:var(--warn)} .kpi.ok .value{color:var(--ok)}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+    .tab{border:none;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-weight:700;color:#374151;cursor:pointer}
+    .tab.active{background:var(--primary);color:#fff;border-color:transparent}
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;padding:14px} .toolbar input,.toolbar select,.toolbar textarea{border:1px solid var(--line);border-radius:12px;padding:12px 13px;background:#fff;min-height:44px}
+    .toolbar input{flex:1;min-width:220px} .toolbar select{min-width:180px}
+    .section-title{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 16px 8px;font-size:14px;font-weight:800}
+    .pill{padding:6px 10px;border-radius:999px;background:#eef2ff;color:#3730a3;font-size:12px;font-weight:700}
+    .list{padding:0 14px 14px}
+    .item{border:1px solid var(--line);border-radius:16px;padding:14px;margin-top:12px;background:#fff}
+    .item:first-child{margin-top:0} .item.low{border-left:6px solid var(--danger);background:#fffafa} .item.high{border-left:6px solid var(--warn);background:#fffdf8}
+    .item.ok{border-left:6px solid var(--ok)}
+    .item-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
+    .name{font-size:16px;font-weight:800} .meta{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.6}
+    .freezer-badges,.store-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+    .badge{padding:9px 12px;border-radius:999px;font-size:14px;font-weight:800;border:1px solid var(--line)}
+    .b1{background:var(--fz1-bg); border-color:#bfdbfe; color:var(--fz1-text)}
+    .b2{background:var(--fz2-bg); border-color:#a7f3d0; color:var(--fz2-text)}
+    .b3{background:var(--fz3-bg); border-color:#fdba74; color:var(--fz3-text)}
+    .b4{background:var(--fz4-bg); border-color:#ddd6fe; color:var(--fz4-text)}
+    .store{background:#f9fafb}
+    .qty-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+    .qty-box{border:1px solid var(--line);border-radius:14px;padding:10px;text-align:center;background:#fff}
+    .qty-box.f1{background:var(--fz1-bg); border-color:#bfdbfe}
+    .qty-box.f2{background:var(--fz2-bg); border-color:#a7f3d0}
+    .qty-box.f3{background:var(--fz3-bg); border-color:#fdba74}
+    .qty-box.f4{background:var(--fz4-bg); border-color:#ddd6fe}
+    .qty-label{font-size:13px;color:var(--muted)} .qty-label:first-child{font-size:15px}
+    .qty-box.f1 .qty-label:first-child{color:var(--fz1-text);font-weight:800}
+    .qty-box.f2 .qty-label:first-child{color:var(--fz2-text);font-weight:800}
+    .qty-box.f3 .qty-label:first-child{color:var(--fz3-text);font-weight:800}
+    .qty-box.f4 .qty-label:first-child{color:var(--fz4-text);font-weight:800}
+    .qty-value{font-size:28px;font-weight:900;margin-top:4px}
+    .qty-box.f1 .qty-value{color:var(--fz1-text)}
+    .qty-box.f2 .qty-value{color:var(--fz2-text)}
+    .qty-box.f3 .qty-value{color:var(--fz3-text)}
+    .qty-box.f4 .qty-value{color:var(--fz4-text)}
+    .status{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;font-size:12px;font-weight:800}
+    .status.low{background:#fee2e2;color:#991b1b}.status.high{background:#ffedd5;color:#9a3412}.status.ok{background:#dcfce7;color:#166534}
+    .actions{position:fixed;left:0;right:0;bottom:0;z-index:60;background:rgba(246,247,251,.96);backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:12px 16px}
+    .actions-inner{max-width:980px;margin:0 auto;display:flex;gap:10px;flex-wrap:wrap}
+    .primary,.secondary,.danger{border:none;border-radius:14px;padding:14px 16px;font-weight:800;cursor:pointer;min-height:48px}
+    .primary{background:var(--primary);color:#fff;flex:1}.secondary{background:#fff;border:1px solid var(--line)} .danger{background:#fff1f2;color:#be123c;border:1px solid #fecdd3}
+    .view{display:none}.view.active{display:block}
+    .modal-wrap{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:flex-end;justify-content:center;z-index:100}
+    .modal-wrap.open{display:flex}.modal{width:100%;max-width:760px;max-height:92vh;overflow:auto;background:#fff;border-radius:22px 22px 0 0;padding:18px}
+    .modal h3{margin:0 0 14px;font-size:18px}.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    .field{display:flex;flex-direction:column;gap:6px}.field.full{grid-column:1/-1}.field label{font-size:12px;font-weight:800;color:#4b5563}
+    .field input,.field select,.field textarea{border:1px solid var(--line);border-radius:12px;padding:12px 13px;min-height:44px;background:#fff}
+    .checks{display:flex;gap:8px;flex-wrap:wrap}.check{padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:#fff;cursor:pointer;font-weight:700}
+    .check.active{background:#dbeafe;border-color:#93c5fd;color:#1d4ed8}
+.initial-stock-box{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff}
+    .initial-stock-box.off{opacity:.55;background:#f8fafc}
+    .initial-stock-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+    .initial-stock-label{font-size:13px;font-weight:800}
+    .initial-stock-input{width:100%}
+    .modal-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+    .small{font-size:12px;color:var(--muted);line-height:1.7}.history-filter{padding:0 14px 14px}
+    .history-card{padding:14px;border:1px solid var(--line);border-radius:14px;background:#fff;margin-top:12px}
+.stock-context{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
+    .stock-context-title{font-size:12px;color:var(--muted);font-weight:800;margin-bottom:8px}
+    .stock-action-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+    .stock-action-btn{border:none;border-radius:12px;padding:11px 10px;font-size:13px;font-weight:800;cursor:pointer;min-height:44px}
+    .stock-action-btn.inbound{background:#dbeafe;color:#1d4ed8}
+    .stock-action-btn.refill{background:#dcfce7;color:#166534}
+    .stock-action-btn.move{background:#f3e8ff;color:#6d28d9}
+    .stock-action-btn:active{transform:scale(.98)}
+    .stock-inline-meta{font-size:12px;color:var(--muted);line-height:1.6}
+    .freezer-card-toolbar{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+    .freezer-card-note{font-size:12px;color:var(--muted);font-weight:700}
+.freezer-group{border:1px solid var(--line);border-radius:18px;padding:14px;background:#fff;margin-top:12px}
+    .freezer-group.f1{background:var(--fz1-bg);border-color:#bfdbfe}
+    .freezer-group.f2{background:var(--fz2-bg);border-color:#a7f3d0}
+    .freezer-group.f3{background:var(--fz3-bg);border-color:#fdba74}
+    .freezer-group.f4{background:var(--fz4-bg);border-color:#ddd6fe}
+    .freezer-group-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+    .freezer-group-title{font-size:22px;font-weight:900}
+    .freezer-group-title.f1{color:var(--fz1-text)}
+    .freezer-group-title.f2{color:var(--fz2-text)}
+    .freezer-group-title.f3{color:var(--fz3-text)}
+    .freezer-group-title.f4{color:var(--fz4-text)}
+    .freezer-group-sub{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.6}
+    .freezer-summary-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .freezer-summary-btn{border:none;border-radius:12px;padding:11px 12px;font-size:13px;font-weight:800;cursor:pointer;min-height:44px;background:#fff}
+    .freezer-items{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+    .freezer-item-row{background:rgba(255,255,255,.9);border:1px solid rgba(255,255,255,.95);border-radius:14px;padding:12px}
+    .freezer-item-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
+    .freezer-item-name{font-size:15px;font-weight:800}
+    .freezer-item-meta{font-size:12px;color:var(--muted);line-height:1.6;margin-top:4px}
+    .freezer-item-qty{font-size:28px;font-weight:900}
+    .freezer-item-qty.f1{color:var(--fz1-text)}
+    .freezer-item-qty.f2{color:var(--fz2-text)}
+    .freezer-item-qty.f3{color:var(--fz3-text)}
+    .freezer-item-qty.f4{color:var(--fz4-text)}
+    .freezer-item-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.item-menu-wrap{position:relative}
+    .item-menu-btn{border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px 12px;font-size:18px;font-weight:900;line-height:1;cursor:pointer;min-width:48px;min-height:44px}
+    .item-menu-panel{position:absolute;right:0;top:52px;z-index:80;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:8px;min-width:180px;display:none}
+    .item-menu-panel.open{display:block}
+    .item-menu-action{width:100%;text-align:left;border:none;background:#fff;border-radius:10px;padding:11px 12px;font-weight:800;cursor:pointer}
+    .mini-note{font-size:11px;color:var(--muted);font-weight:700}
+.row-actions-2{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}
+    .stock-action-btn.edit{background:#e0f2fe;color:#075985}
+    .stock-action-btn.remove{background:#fef2f2;color:#b91c1c}
+    .freezer-add-wrap{margin-top:12px;padding-top:12px;border-top:1px dashed rgba(0,0,0,.08)}
+    .freezer-add-btn{width:100%;border:none;border-radius:14px;padding:13px 14px;font-size:14px;font-weight:800;cursor:pointer;background:#fff}
+    .freezer-add-btn.f1{color:var(--fz1-text);border:1px solid #bfdbfe}
+    .freezer-add-btn.f2{color:var(--fz2-text);border:1px solid #a7f3d0}
+    .freezer-add-btn.f3{color:var(--fz3-text);border:1px solid #fdba74}
+    .freezer-add-btn.f4{color:var(--fz4-text);border:1px solid #ddd6fe}
+.status.out{background:#111827;color:#fff}
+    .freezer-item-row.out-zero{opacity:.96;background:#f9fafb;border:1px dashed #cbd5e1}
+    .freezer-item-row.out-zero .freezer-item-name{color:#475569}
+    .freezer-item-row.out-zero .freezer-item-meta{color:#64748b}
+    .freezer-item-qty.zero{color:#6b7280 !important}
+    .zero-note{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:#f3f4f6;color:#374151;font-size:12px;font-weight:800}
+    .history-main{font-weight:800}.history-sub{font-size:12px;color:var(--muted);line-height:1.7;margin-top:4px}
+    .empty{padding:30px 18px;text-align:center;color:var(--muted)} .role-note{font-size:12px;color:var(--muted);padding:0 16px 14px}
+    .sync-box{padding:14px 16px;margin-top:14px}.sync-title{font-size:14px;font-weight:800;color:#1e3a8a}.sync-text{font-size:12px;color:var(--muted);line-height:1.7;margin-top:6px}
+    .sync-status{display:inline-flex;margin-top:10px;padding:7px 11px;border-radius:999px;background:#f3f4f6;font-size:12px;font-weight:700}
+.freezer-legend{display:flex;gap:8px;flex-wrap:wrap;padding:0 14px 14px}
+    .legend-chip{display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border-radius:999px;border:1px solid var(--line);font-size:12px;font-weight:700;background:#fff}
+    .legend-dot{width:10px;height:10px;border-radius:999px;display:inline-block}
+    .legend-dot.f1{background:var(--fz1-accent)}
+    .legend-dot.f2{background:var(--fz2-accent)}
+    .legend-dot.f3{background:var(--fz3-accent)}
+    .legend-dot.f4{background:var(--fz4-accent)}
+    .toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 14px;border-radius:999px;font-size:13px;font-weight:700;display:none;z-index:120}
+    .toast.show{display:block}
+    @media (max-width:700px){.grid.kpis{grid-template-columns:repeat(2,1fr)}.qty-grid{grid-template-columns:repeat(2,1fr)}.form-grid{grid-template-columns:1fr}.title{font-size:21px}.app{padding:12px 12px 120px}.header{margin:0 -12px 12px;padding:12px}}
+    /* ===== ダッシュボード合計在庫数 大型表示 ===== */
+    .dashboard-side{display:flex;flex-direction:column;align-items:flex-end;gap:8px;min-width:80px}
+    .dashboard-total-wrap{text-align:center}
+    .dashboard-total-big{font-size:44px;font-weight:900;line-height:1;color:#1f2937}
+    .dashboard-total-big.low{color:var(--warn)}
+    .dashboard-total-big.zero{color:var(--danger)}
+    .dashboard-total-unit{font-size:13px;color:var(--muted);font-weight:700;margin-top:4px;text-align:center}
+    @media (max-width:700px){.dashboard-total-big{font-size:36px}}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-row">
+      <div>
+        <h1 class="title">屋上冷凍ストッカー在庫管理</h1>
+        <div class="sub">ストッカー①〜④の在庫を一元管理。入庫 / 店舗補充 / ストッカー間移動 / 履歴確認に対応。</div>
+      </div>
+      <div class="role-chip" id="userChip">利用者: 管理者</div>
+    </div>
+  </div>
+  <div class="grid kpis" style="margin-top:14px">
+    <div class="card kpi"><div class="label">登録商品数</div><div class="value" id="kpiItems">0</div></div>
+    <div class="card kpi alert"><div class="label">不足アラート</div><div class="value" id="kpiLow">0</div></div>
+    <div class="card kpi warn"><div class="label">過剰警告</div><div class="value" id="kpiHigh">0</div></div>
+    <div class="card kpi ok"><div class="label">今日の操作件数</div><div class="value" id="kpiToday">0</div></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="dashboard">ダッシュボード</button>
+    <button class="tab" data-tab="freezers">ストッカー別</button>
+        <button class="tab" data-tab="history">履歴</button>
+    <button class="tab" data-tab="alerts">アラート</button>
+    <button class="tab" data-tab="settings">設定</button>
+
+  </div>
+
+  <section class="view active" id="view-dashboard">
+    <div class="card">
+      <div class="toolbar">
+        <input type="search" id="searchDashboard" placeholder="商品名で検索">
+        <select id="sortDashboard">
+          <option value="alert">アラート優先</option>
+          <option value="freq">よく使う順</option>
+          <option value="name">名前順</option>
+        </select>
+      </div>
+      <div class="section-title"><span>全体一覧</span><span class="pill" id="dashboardCount">0件</span></div>
+      <div class="freezer-legend"><span class="legend-chip"><span class="legend-dot f1"></span>ストッカー①</span><span class="legend-chip"><span class="legend-dot f2"></span>ストッカー②</span><span class="legend-chip"><span class="legend-dot f3"></span>ストッカー③</span><span class="legend-chip"><span class="legend-dot f4"></span>ストッカー④</span></div>
+      <div class="list" id="dashboardList"></div>
+    </div>
+  </section>
+
+  <section class="view" id="view-freezers">
+    <div class="card">
+      <div class="toolbar">
+        <select id="stockViewMode">
+          <option value="freezer">表示: ストッカー別</option>
+          <option value="item">表示: 商品別</option>
+        </select>
+        <select id="freezerFilter">
+          <option value="all">全ストッカー</option>
+          <option value="F1">ストッカー①</option>
+          <option value="F2">ストッカー②</option>
+          <option value="F3">ストッカー③</option>
+          <option value="F4">ストッカー④</option>
+        </select>
+        <input type="search" id="searchFreezer" placeholder="商品名で検索">
+      </div>
+      <div class="section-title"><span>在庫一覧 / 操作</span><span class="pill" id="freezerCount">0件</span></div>
+      <div class="freezer-legend"><span class="legend-chip"><span class="legend-dot f1"></span>ストッカー①</span><span class="legend-chip"><span class="legend-dot f2"></span>ストッカー②</span><span class="legend-chip"><span class="legend-dot f3"></span>ストッカー③</span><span class="legend-chip"><span class="legend-dot f4"></span>ストッカー④</span></div>
+      <div class="role-note">デフォルトはストッカー別表示です。在庫0の商品も「在庫切れ」として残し、削除せず一覧に保持します。全体一覧は在庫俯瞰専用、詳細な補充情報は履歴や操作画面で扱います。</div>
+      <div class="list" id="freezerList"></div>
+    </div>
+  </section>
+
+  <section class="view" id="view-history">
+    <div class="card">
+      <div class="history-filter">
+        <div class="toolbar" style="padding:14px 0 0">
+          <input type="search" id="historySearch" placeholder="商品名・担当者で検索">
+          <select id="historyType">
+            <option value="all">すべての操作</option>
+            <option value="入庫">入庫</option>
+            <option value="店舗補充">店舗補充</option>
+            <option value="ストッカー移動">ストッカー移動</option>
+            <option value="商品追加">商品追加</option>
+            <option value="ストッカーへ商品追加">ストッカーへ商品追加</option>
+            <option value="ストッカーから商品削除">ストッカーから商品削除</option>
+            <option value="商品編集">商品編集</option>
+          </select>
+        </div>
+      </div>
+      <div class="section-title"><span>履歴一覧</span><span class="pill" id="historyCount">0件</span></div>
+      <div class="list" id="historyList"></div>
+    </div>
+  </section>
+
+  <section class="view" id="view-alerts">
+    <div class="card">
+      <div class="section-title"><span>不足 / 過剰在庫</span><span class="pill" id="alertCount">0件</span></div>
+      <div class="list" id="alertList"></div>
+    </div>
+  </section>
+
+  <section class="view" id="view-settings">
+    <div class="card">
+      <div class="section-title"><span>基本設定</span><span class="pill">ローカル保存 + クラウド同期</span></div>
+      <div class="list">
+
+        <div class="item ok" style="margin-top:0">
+          <div class="name">Supabase同期設定</div>
+          <div class="meta">クラウド同期の接続状態確認、接続設定、手動同期を行います。</div>
+          <div class="sync-status" id="syncStatus">未接続</div>
+          <div class="modal-actions">
+            <button class="secondary" onclick="openCloudModal()">接続設定</button>
+            <button class="secondary" onclick="reloadAllFromSupabase()">今すぐ同期</button>
+          </div>
+        </div>
+
+        <!-- スキーマ移行通知：visible_in_freezers カラムがない場合に自動表示 -->
+        <div class="item high" id="schemaMigrationBox" style="display:none;margin-top:12px">
+          <div class="name" style="color:var(--warn)">⚠️ Supabase スキーマ更新が必要です</div>
+          <div class="meta" style="margin-top:6px">
+            別端末・別ブラウザでも「ストッカーから外した」状態を正しく同期するために、<br>
+            <strong>rooftop_items</strong> テーブルへのカラム追加が必要です。<br>
+            Supabase ダッシュボード → SQL Editor で以下のSQLを実行してください。
+          </div>
+          <textarea id="migrationSql" readonly style="width:100%;margin-top:10px;padding:10px 12px;border-radius:10px;border:1px solid #fcd34d;background:#fffbeb;font-family:monospace;font-size:12px;line-height:1.6;resize:none;min-height:64px;color:#92400e">ALTER TABLE rooftop_items ADD COLUMN IF NOT EXISTS visible_in_freezers JSONB DEFAULT '{"F1":false,"F2":false,"F3":false,"F4":false}';</textarea>
+          <div class="modal-actions" style="margin-top:10px">
+            <button class="secondary" onclick="copyMigrationSql()">📋 SQLをコピー</button>
+            <button class="secondary" onclick="checkSchemaVersion().then(()=>toast('✓ チェック完了'))">再チェック</button>
+          </div>
+        </div>
+
+<div class="item ok" style="margin-top:0">
+          <div class="name">利用者情報</div>
+          <div class="meta">履歴に記録する名前と権限を設定します。</div>
+          <div class="form-grid" style="margin-top:12px">
+            <div class="field"><label>利用者名</label><input id="userNameInput" placeholder="例: 松浦"></div>
+            <div class="field"><label>権限</label><select id="userRoleInput"><option value="管理者">管理者</option><option value="担当者">担当者</option><option value="オーナー">オーナー</option></select></div>
+          </div>
+          <div class="modal-actions"><button class="primary" onclick="saveUserSettings()">利用者設定を保存</button></div>
+        </div>
+        <div class="item ok">
+          <div class="name">商品マスタ</div>
+          <div class="meta">屋上ストッカー専用の商品を登録します。最低在庫数・最大在庫数・単位を商品ごとに設定できます。</div>
+          <div class="modal-actions"><button class="primary" onclick="openItemModal()">商品を追加</button></div>
+        </div>
+        <div class="item high">
+          <div class="name">データ操作</div>
+          <div class="meta">テスト用に初期データへ戻したい場合のみ実行してください。クラウド接続中はローカルもクラウドも上書きされます。</div>
+          <div class="modal-actions"><button class="danger" onclick="resetAll()">初期データに戻す</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="actions"><div class="actions-inner"><button class="secondary" onclick="openItemModal()">＋ 商品追加</button><button class="primary" onclick="document.querySelector('[data-tab=&quot;freezers&quot;]').click(); window.scrollTo({top:0,behavior:'smooth'});">ストッカー別在庫へ</button></div></div>
+
+<div class="modal-wrap" id="itemModalWrap"><div class="modal">
+  <h3 id="itemModalTitle">商品を追加</h3>
+  <div class="form-grid">
+    <div class="field full"><label>商品名</label><input id="itemName"></div>
+    <div class="field"><label>カテゴリ</label><select id="itemCategory"><option>冷凍食材</option><option>冷凍惣菜</option><option>包材</option><option>その他</option></select></div>
+    <div class="field"><label>単位</label><select id="itemUnit"><option>個</option><option>袋</option><option>パック</option><option>ケース</option><option>kg</option></select></div>
+    <div class="field"><label>最低在庫数</label><input id="itemMin" type="number" min="0" max="9999"></div>
+    <div class="field"><label>最大在庫数</label><input id="itemMax" type="number" min="0" max="9999"></div>
+    <div class="field full"><label>よく補充する店舗</label><div class="checks" id="storeChecks"></div></div>
+    <div class="field full"><label>登録するストッカー</label><div class="checks" id="freezerChecks"></div></div>
+    <div class="field full">
+      <label>初期在庫設定</label>
+      <div class="form-grid" id="initialStockGrid"></div>
+    </div>
+    <div class="field full small">商品追加時に、選択したストッカーへ初期在庫を設定できます。0の場合でも表示対象として登録されます。</div>
+  </div>
+  <div class="modal-actions"><button class="secondary" onclick="closeModal('itemModalWrap')">閉じる</button><button class="primary" onclick="saveItem()">保存する</button></div>
+</div></div>
+
+<div class="modal-wrap" id="moveModalWrap"><div class="modal">
+  <h3 id="moveModalTitle">在庫操作</h3><div class="small" id="moveContextText" style="margin-bottom:12px">ストッカー基準で対象を引き継ぎます。</div>
+  <div class="form-grid">
+    <div class="field full"><label>商品</label><select id="moveItem"></select></div>
+    <div class="field"><label>数量</label><input id="moveQty" type="number" min="1" max="9999" value="1"></div>
+    <div class="field"><label>担当者</label><input id="moveUser"></div>
+    <div class="field" id="fromField"><label>移動元</label><select id="moveFrom"></select></div>
+    <div class="field" id="toField"><label>移動先</label><select id="moveTo"></select></div>
+    <div class="field full"><label>メモ（任意）</label><textarea id="moveMemo" rows="3" placeholder="任意メモ"></textarea></div><div class="field full small" id="moveHelp"></div>
+  </div>
+  <div class="modal-actions"><button class="secondary" onclick="closeModal('moveModalWrap')">閉じる</button><button class="primary" onclick="submitMove()">実行する</button></div>
+</div></div>
+
+<div class="modal-wrap" id="freezerItemModalWrap"><div class="modal">
+  <h3 id="freezerItemModalTitle">このストッカーに商品追加</h3>
+  <div class="small" id="freezerItemContext" style="margin-bottom:12px"></div>
+  <div class="form-grid">
+    <div class="field full">
+      <label>追加方法</label>
+      <select id="freezerItemMode">
+        <option value="existing">既存商品を追加</option>
+        <option value="new">新規商品を作成して追加</option>
+      </select>
+    </div>
+
+    <div id="existingItemSection" class="field full">
+      <label>既存商品</label>
+      <select id="existingItemSelect"></select>
+    </div>
+
+    <div id="newItemSection" style="display:none;grid-column:1/-1">
+      <div class="form-grid">
+        <div class="field full"><label>商品名</label><input id="newFreezerItemName"></div>
+        <div class="field"><label>カテゴリ</label><select id="newFreezerItemCategory"><option>冷凍食材</option><option>冷凍惣菜</option><option>包材</option><option>その他</option></select></div>
+        <div class="field"><label>単位</label><select id="newFreezerItemUnit"><option>個</option><option>袋</option><option>パック</option><option>ケース</option><option>kg</option></select></div>
+        <div class="field"><label>最低在庫数</label><input id="newFreezerItemMin" type="number" min="0" max="9999"></div>
+        <div class="field"><label>最大在庫数</label><input id="newFreezerItemMax" type="number" min="0" max="9999"></div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>対象ストッカー</label>
+      <select id="freezerItemTarget"></select>
+    </div>
+    <div class="field">
+      <label>初期数量</label>
+      <input id="freezerItemInitialQty" type="number" min="0" max="9999" value="0">
+    </div>
+    <div class="field full">
+      <label>数量0でも表示対象にする（在庫切れ表示を維持）</label>
+      <select id="freezerItemVisibleFlag">
+        <option value="true">表示する</option>
+        <option value="false">表示しない</option>
+      </select>
+    </div>
+  </div>
+  <div class="modal-actions">
+    <button class="secondary" onclick="closeModal('freezerItemModalWrap')">閉じる</button>
+    <button class="primary" onclick="submitFreezerItemModal()">追加する</button>
+  </div>
+</div></div>
+
+<div class="modal-wrap" id="cloudModalWrap"><div class="modal">
+  <h3>Supabase接続設定</h3>
+  <div class="form-grid">
+    <div class="field full"><label>Supabase URL</label><input id="cloudUrl" placeholder="https://xxxxx.supabase.co"></div>
+    <div class="field full"><label>Supabase Anon Key</label><textarea id="cloudAnonKey" rows="4" placeholder="eyJhbGciOi..."></textarea></div>
+    <div class="field"><label>ログインメール</label><input id="cloudEmail" type="email" placeholder="example@example.com"></div>
+    <div class="field"><label>パスワード</label><input id="cloudPassword" type="password" placeholder="password"></div>
+    <div class="field full small">
+      必要テーブル: profiles / rooftop_items / rooftop_freezer_stock / rooftop_history。<br>
+      rooftop_items は id, name, category, unit, min_stock, max_stock, preferred_stores(jsonb), usage_count, is_active。<br>
+      rooftop_freezer_stock は item_id, freezer_code, quantity。<br>
+      rooftop_history は action_type, acted_by_name, item_id, item_name_snapshot, quantity, unit, from_scope, to_scope, created_at。
+    </div>
+  </div>
+  <div class="modal-actions">
+    <button class="secondary" onclick="closeModal('cloudModalWrap')">閉じる</button>
+    <button class="primary" onclick="connectSupabase()">接続する</button>
+  </div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY='rooftop_freezer_inventory_v2';
+const SUPABASE_STORAGE_KEY='rooftop_supabase_config_v1';
+const FREEZERS=[{code:'F1',name:'ストッカー①',cls:'b1'},{code:'F2',name:'ストッカー②',cls:'b2'},{code:'F3',name:'ストッカー③',cls:'b3'},{code:'F4',name:'ストッカー④',cls:'b4'}];
+const STORES=['神楽坂','男マエ食道','深夜食道'];
+const ROLES=['管理者','担当者','オーナー'];
+
+const initialState={user:{name:'松浦',role:'管理者'},items:[
+{id:'i1',name:'餃子',category:'冷凍食材',unit:'袋',min:20,max:80,preferredStores:['神楽坂','深夜食道'],usageCount:4,freezerStock:{F1:18,F2:12,F3:0,F4:0},storeMoved:{'神楽坂':24,'男マエ食道':0,'深夜食道':6}},
+{id:'i2',name:'地鶏炭火焼',category:'冷凍食材',unit:'パック',min:10,max:40,preferredStores:['神楽坂','男マエ食道'],usageCount:3,freezerStock:{F1:6,F2:8,F3:4,F4:0},storeMoved:{'神楽坂':5,'男マエ食道':7,'深夜食道':0}},
+{id:'i3',name:'うなぎ真空パック',category:'冷凍食材',unit:'パック',min:5,max:25,preferredStores:['男マエ食道'],usageCount:1,freezerStock:{F1:0,F2:3,F3:2,F4:1},storeMoved:{'神楽坂':0,'男マエ食道':4,'深夜食道':0}}
+].map(item => ({
+  ...item,
+  visibleInFreezers: {
+    F1: Number(item.freezerStock?.F1 || 0) > 0,
+    F2: Number(item.freezerStock?.F2 || 0) > 0,
+    F3: Number(item.freezerStock?.F3 || 0) > 0,
+    F4: Number(item.freezerStock?.F4 || 0) > 0
+  }
+})),history:[
+{id:'h1',type:'店舗補充',user:'松浦',itemId:'i1',itemName:'餃子',qty:10,unit:'袋',from:'ストッカー①',to:'神楽坂',time:Date.now()-1000*60*60*2},
+{id:'h2',type:'ストッカー移動',user:'松浦',itemId:'i2',itemName:'地鶏炭火焼',qty:4,unit:'パック',from:'ストッカー①',to:'ストッカー③',time:Date.now()-1000*60*60*7},
+{id:'h3',type:'入庫',user:'松浦',itemId:'i3',itemName:'うなぎ真空パック',qty:5,unit:'パック',from:'仕入れ',to:'ストッカー②',time:Date.now()-1000*60*60*28}
+]};
+
+let state=loadState(),editingItemId=null,moveMode='toStore',prefillItemId=null,prefillFreezerCode=null,currentFreezerContext=null;
+let supabaseClient=null,currentAuthUser=null,cloudEnabled=false;
+
+function loadState(){
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY);
+    if(raw) return normalizeState(JSON.parse(raw));
+  }catch(e){}
+  return normalizeState(JSON.parse(JSON.stringify(initialState)));
+}
+function normalizeState(input){
+  const s = input || {};
+  s.user = s.user || {name:'松浦',role:'管理者'};
+  s.items = (s.items || []).map(item => {
+    const freezerStock = item.freezerStock || {F1:0,F2:0,F3:0,F4:0};
+    const hasVisibilityObject = !!item.visibleInFreezers;
+    const visibleInFreezers = hasVisibilityObject ? {...item.visibleInFreezers} : {};
+    FREEZERS.forEach(f=>{
+      if(typeof freezerStock[f.code] !== 'number') freezerStock[f.code] = Number(freezerStock[f.code] || 0);
+      if(typeof visibleInFreezers[f.code] !== 'boolean'){
+        visibleInFreezers[f.code] = hasVisibilityObject ? false : true;
+      }
+    });
+    return {
+      ...item,
+      preferredStores: item.preferredStores || [],
+      usageCount: Number(item.usageCount || 0),
+      storeMoved: item.storeMoved || {'神楽坂':0,'男マエ食道':0,'深夜食道':0},
+      freezerStock,
+      visibleInFreezers
+    };
+  });
+  s.history = s.history || [];
+  return s;
+}
+function saveState(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2200)}
+function getFreezerVisibility(item, freezerCode){
+  if(!item.visibleInFreezers) return true;
+  if(typeof item.visibleInFreezers[freezerCode] === 'boolean') return item.visibleInFreezers[freezerCode];
+  return false;
+}
+function setFreezerVisibility(item, freezerCode, visible){
+  if(!item.visibleInFreezers) item.visibleInFreezers = {F1:false,F2:false,F3:false,F4:false};
+  item.visibleInFreezers[freezerCode] = !!visible;
+}
+function inferVisibleInFreezers(itemId, stockMap, previousVisibility){
+  if(previousVisibility && typeof previousVisibility === 'object'){
+    return {
+      F1: typeof previousVisibility.F1 === 'boolean' ? previousVisibility.F1 : false,
+      F2: typeof previousVisibility.F2 === 'boolean' ? previousVisibility.F2 : false,
+      F3: typeof previousVisibility.F3 === 'boolean' ? previousVisibility.F3 : false,
+      F4: typeof previousVisibility.F4 === 'boolean' ? previousVisibility.F4 : false
+    };
+  }
+
+  const stock = stockMap[itemId] || {F1:0,F2:0,F3:0,F4:0};
+  const hasAnyStock =
+    Number(stock.F1 || 0) > 0 ||
+    Number(stock.F2 || 0) > 0 ||
+    Number(stock.F3 || 0) > 0 ||
+    Number(stock.F4 || 0) > 0;
+
+  if(hasAnyStock){
+    return {
+      F1: Number(stock.F1 || 0) > 0,
+      F2: Number(stock.F2 || 0) > 0,
+      F3: Number(stock.F3 || 0) > 0,
+      F4: Number(stock.F4 || 0) > 0
+    };
+  }
+
+  // 在庫が全ストッカーで0、かつcloud/local両方にvisible情報がない場合は
+  // 「未登録またはすべて外された」状態として全false（hiddenとして扱う）
+  // ※ visible_in_freezers がcloud保存されるようになったため、このケースは旧データのみ
+  return {F1:false, F2:false, F3:false, F4:false};
+}
+
+function findSameNamedItemInFreezer(name, freezerCode, excludeItemId=null){
+  const normalized = String(name || '').trim().toLowerCase();
+  if(!normalized) return null;
+  return state.items.find(item => {
+    if(excludeItemId && item.id === excludeItemId) return false;
+    const sameName = String(item.name || '').trim().toLowerCase() === normalized;
+    const visible = getFreezerVisibility(item, freezerCode) === true;
+    return sameName && visible;
+  }) || null;
+}
+
+function buildUnifiedItems(items){
+  const map = new Map();
+  (items || []).forEach(item => {
+    const key = String(item.name || '').trim().toLowerCase();
+    if(!key) return;
+
+    if(!map.has(key)){
+      const cloned = JSON.parse(JSON.stringify(item));
+      if(!cloned.freezerStock) cloned.freezerStock = {F1:0,F2:0,F3:0,F4:0};
+      if(!cloned.visibleInFreezers) cloned.visibleInFreezers = {F1:false,F2:false,F3:false,F4:false};
+      map.set(key, cloned);
+      return;
+    }
+
+    const merged = map.get(key);
+    FREEZERS.forEach(f => {
+      merged.freezerStock[f.code] = Number(merged.freezerStock?.[f.code] || 0) + Number(item.freezerStock?.[f.code] || 0);
+      setFreezerVisibility(merged, f.code, getFreezerVisibility(merged, f.code) || getFreezerVisibility(item, f.code));
+    });
+    merged.usageCount = Number(merged.usageCount || 0) + Number(item.usageCount || 0);
+    merged.min = Math.max(Number(merged.min || 0), Number(item.min || 0));
+    merged.max = Math.max(Number(merged.max || 0), Number(item.max || 0));
+    map.set(key, merged);
+  });
+  return [...map.values()];
+}
+
+function getUnifiedVisibleItems(searchText=''){
+  const q = String(searchText || '').trim().toLowerCase();
+  return buildUnifiedItems(state.items).filter(item => !q || String(item.name || '').toLowerCase().includes(q));
+}
+
+function getUnifiedRowsForFreezer(freezerCode, searchText=''){
+  return getUnifiedVisibleItems(searchText)
+    .map(item => ({
+      item,
+      qty: Number(item.freezerStock?.[freezerCode] || 0),
+      visible: getFreezerVisibility(item, freezerCode) === true
+    }))
+    .filter(row => row.visible === true)
+    .sort((a,b) => b.qty - a.qty || a.item.name.localeCompare(b.item.name,'ja'));
+}
+function totalStock(item){return Object.values(item.freezerStock||{}).reduce((a,b)=>a+(Number(b)||0),0)}
+function statusOf(item){const total=totalStock(item); if(total<Number(item.min||0)) return 'low'; if(total>Number(item.max||0)) return 'high'; return 'ok'}
+function freezerName(code){return (FREEZERS.find(f=>f.code===code)||{}).name||code}
+function freezerCodeFromName(name){const f=FREEZERS.find(x=>x.name===name||x.code===name); return f?f.code:name}
+function formatDate(ts){return new Date(ts).toLocaleString('ja-JP',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})}
+function todayCount(){const today=new Date().toDateString(); return state.history.filter(h=>new Date(h.time).toDateString()===today).length}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function saveCloudConfig(cfg){localStorage.setItem(SUPABASE_STORAGE_KEY, JSON.stringify(cfg))}
+function cloudConfig(){try{return JSON.parse(localStorage.getItem(SUPABASE_STORAGE_KEY)||'{}')}catch(e){return {}}}
+function updateSyncStatus(text, connected=false){
+  const el=document.getElementById('syncStatus'); if(!el)return;
+  el.textContent=text; el.style.background=connected?'#dcfce7':'#f3f4f6'; el.style.color=connected?'#166534':'#374151';
+}
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+function openCloudModal(){
+  const cfg=cloudConfig();
+  document.getElementById('cloudUrl').value=cfg.url||'';
+  document.getElementById('cloudAnonKey').value=cfg.anonKey||'';
+  document.getElementById('cloudEmail').value=cfg.email||'';
+  document.getElementById('cloudPassword').value=cfg.password||'';
+  openModal('cloudModalWrap');
+}
+function isCloudReady(){return cloudEnabled && !!supabaseClient && !!currentAuthUser}
+
+function rerenderAllViews(){renderUser();renderKpis();renderDashboard();renderFreezers();renderAlerts();renderHistory();fillItemSelects()}
+function render(){saveState();rerenderAllViews()}
+function renderUser(){
+  document.getElementById('userChip').textContent=`利用者: ${state.user.name} / ${state.user.role}`;
+  document.getElementById('userNameInput').value=state.user.name; document.getElementById('userRoleInput').value=state.user.role;
+}
+function renderKpis(){
+  // ダッシュボードと同じ「管理対象商品」（visible=true が1つでもある）だけを対象にする
+  const managed=buildUnifiedItems(state.items).filter(i=>FREEZERS.some(f=>getFreezerVisibility(i,f.code)===true));
+  document.getElementById('kpiItems').textContent=managed.length;
+  document.getElementById('kpiLow').textContent=managed.filter(i=>statusOf(i)==='low').length;
+  document.getElementById('kpiHigh').textContent=managed.filter(i=>statusOf(i)==='high').length;
+  document.getElementById('kpiToday').textContent=todayCount();
+}
+function sortItems(items,mode){
+  const arr=[...items];
+  if(mode==='name') arr.sort((a,b)=>a.name.localeCompare(b.name,'ja'));
+  else if(mode==='alert'){const rank={low:0,high:1,ok:2}; arr.sort((a,b)=>rank[statusOf(a)]-rank[statusOf(b)] || a.name.localeCompare(b.name,'ja'))}
+  else arr.sort((a,b)=>(b.usageCount||0)-(a.usageCount||0) || a.name.localeCompare(b.name,'ja'));
+  return arr;
+}
+function itemCard(item){
+  const status=statusOf(item), total=totalStock(item);
+  const activeFreezers = FREEZERS.filter(f => getFreezerVisibility(item, f.code));
+
+  const freezerBadges=activeFreezers
+    .map(f=>`<span class="badge ${f.cls}"><strong>${f.name}</strong>: ${Number(item.freezerStock?.[f.code]||0)}${item.unit}</span>`)
+    .join('');
+
+  const statusHtml = total===0
+    ? `<span class="status out">在庫切れ</span>`
+    : status==='low'
+    ? `<span class="status low">不足アラート</span>`
+    : status==='high'
+    ? `<span class="status high">過剰警告</span>`
+    : `<span class="status ok">適正在庫</span>`;
+
+  return `
+    <div class="item ${status}">
+      <div class="item-head">
+        <div>
+          <div class="name">${escapeHtml(item.name)}</div>
+          <div class="meta">
+            カテゴリ: ${escapeHtml(item.category)} / 単位: ${escapeHtml(item.unit)} / 最低: ${item.min}${item.unit} / 最大: ${item.max}${item.unit}
+          </div>
+          ${freezerBadges ? `<div class="freezer-badges">${freezerBadges}</div>` : ``}
+        </div>
+        <div class="dashboard-side">
+          ${statusHtml}
+          <div class="dashboard-total-wrap">
+            <div class="dashboard-total-big${total===0?' zero':status==='low'?' low':''}">${total}</div>
+            <div class="dashboard-total-unit">${item.unit}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+function renderDashboard(){
+  const q=document.getElementById('searchDashboard')?.value?.trim().toLowerCase()||'',
+        mode=document.getElementById('sortDashboard')?.value||'freq';
+
+  let items = getUnifiedVisibleItems(q)
+    .filter(i => FREEZERS.some(f => getFreezerVisibility(i, f.code) === true));
+
+  items = sortItems(items, mode);
+
+  document.getElementById('dashboardCount').textContent=`${items.length}件`;
+  document.getElementById('dashboardList').innerHTML=items.length
+    ? items.map(itemCard).join('')
+    : `<div class="empty">表示対象の商品はありません。</div>`;
+}
+function renderFreezers(){
+  const freezer=document.getElementById('freezerFilter')?.value||'all';
+  const q=document.getElementById('searchFreezer')?.value?.trim().toLowerCase()||'';
+  const viewMode=document.getElementById('stockViewMode')?.value||'freezer';
+
+  if(viewMode==='item'){
+    let items=getUnifiedVisibleItems(q);
+    if(freezer!=='all'){
+      items=items.filter(i=>getFreezerVisibility(i, freezer) === true);
+    }
+    document.getElementById('freezerCount').textContent=`${items.length}件`;
+    document.getElementById('freezerList').innerHTML=items.length?items.map(item=>{
+      const status=statusOf(item);
+      const boxes=FREEZERS
+        .filter(f=>freezer==='all'||freezer===f.code)
+        .filter(f=>getFreezerVisibility(item, f.code) === true)
+        .map(f=>{
+          const currentQty=Number(item.freezerStock[f.code]||0);
+          return `<div class="qty-box ${String(f.code).toLowerCase()}">
+            <div class="qty-label">${f.name}</div>
+            <div class="qty-value">${currentQty}</div>
+            <div class="qty-label">${item.unit}</div>
+            <div class="stock-context">
+              <div class="stock-context-title">この在庫を動かす</div>
+              <div class="stock-inline-meta">現在在庫: ${currentQty}${item.unit}</div>
+              <div class="stock-action-grid">
+                <button class="stock-action-btn inbound" onclick="openContextMoveModal('inbound','${item.id}','${f.code}')">入庫</button>
+                <button class="stock-action-btn refill" onclick="openContextMoveModal('toStore','${item.id}','${f.code}')">店舗補充</button>
+                <button class="stock-action-btn move" onclick="openContextMoveModal('betweenFreezers','${item.id}','${f.code}')">移動</button>
+              </div>
+            </div>
+          </div>`;
+        }).join('');
+      return `<div class="item ${status}">
+        <div class="item-head">
+          <div>
+            <div class="name">${escapeHtml(item.name)}</div>
+            <div class="meta">合計在庫 ${totalStock(item)}${item.unit} / 最低 ${item.min}${item.unit} / 最大 ${item.max}${item.unit}</div>
+          </div>
+          <div>${status==='low'?'<span class="status low">不足</span>':status==='high'?'<span class="status high">過剰</span>':'<span class="status ok">適正</span>'}</div>
+        </div>
+        <div class="freezer-card-toolbar">
+          <div class="freezer-card-note">商品軸表示</div>
+          <button class="secondary" onclick="editItem('${item.id}', null)">商品編集</button>
+        </div>
+        <div class="qty-grid">${boxes}</div>
+      </div>`;
+    }).join(''):`<div class="empty">該当する在庫はありません。</div>`;
+    return;
+  }
+
+  const freezerGroups = FREEZERS.filter(f=>freezer==='all' || freezer===f.code).map(f=>{
+    const rows = getUnifiedRowsForFreezer(f.code, q);
+
+    const totalKinds = rows.length;
+    const totalQty = rows.reduce((a,b)=>a+b.qty,0);
+    const body = rows.length ? rows.map(row=>{
+      const item = row.item;
+      const qty = row.qty;
+      const status = statusOf(item);
+      const zeroOut = qty === 0;
+      const statusHtml = zeroOut
+        ? '<span class="status out">在庫切れ</span>'
+        : status==='low'
+        ? '<span class="status low">商品全体で不足</span>'
+        : status==='high'
+        ? '<span class="status high">商品全体で過剰</span>'
+        : '<span class="status ok">商品全体で適正</span>';
+      const zeroNote = zeroOut ? '<span class="zero-note">0（在庫なし）</span>' : '';
+      return `<div class="freezer-item-row ${zeroOut ? 'out-zero' : ''}">
+        <div class="freezer-item-top">
+          <div>
+            <div class="freezer-item-name">${escapeHtml(item.name)}</div>
+            <div class="freezer-item-meta">このストッカー在庫: ${qty}${item.unit} / 商品合計: ${totalStock(item)}${item.unit} / 最低: ${item.min}${item.unit} / 最大: ${item.max}${item.unit}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="freezer-item-qty ${String(f.code).toLowerCase()} ${zeroOut ? 'zero' : ''}">${qty}</div>
+            <div class="mini-note">${item.unit}</div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">${statusHtml}${zeroNote}</div>
+          <div class="item-menu-wrap">
+            <button class="item-menu-btn" type="button"
+onclick="openEditItemFromFreezer('${item.id}','${f.code}')">商品編集</button>
+            
+          </div>
+        </div>
+        <div class="freezer-item-actions">
+          <button class="stock-action-btn inbound" onclick="openContextMoveModal('inbound','${item.id}','${f.code}')">入庫</button>
+          <button class="stock-action-btn refill" onclick="openContextMoveModal('toStore','${item.id}','${f.code}')">店舗補充</button>
+          <button class="stock-action-btn move" onclick="openContextMoveModal('betweenFreezers','${item.id}','${f.code}')">移動</button>
+        </div>
+      </div>`;
+    }).join('') : `<div class="empty">このストッカーに表示対象の商品はありません。</div>`;
+
+    return `<div class="freezer-group ${String(f.code).toLowerCase()}">
+      <div class="freezer-group-head">
+        <div>
+          <div class="freezer-group-title ${String(f.code).toLowerCase()}">${f.name}</div>
+          <div class="freezer-group-sub">このストッカーの中身を基準に表示しています。現場で「どのストッカーに何があるか」をそのまま確認できます。</div>
+        </div>
+        <div style="text-align:right">
+          <div class="pill">${totalKinds}品目</div>
+          <div class="freezer-group-sub" style="margin-top:8px">合計数量 ${totalQty}</div>
+        </div>
+      </div>
+      <div class="freezer-card-toolbar">
+        <div class="freezer-card-note">このストッカーを起点に操作</div>
+        <div class="freezer-summary-actions">
+          <button class="freezer-summary-btn" onclick="openFreezerQuickAction('inbound','${f.code}')">このストッカーへ入庫</button>
+          <button class="freezer-summary-btn" onclick="openFreezerQuickAction('toStore','${f.code}')">このストッカーから補充</button>
+          <button class="freezer-summary-btn" onclick="openFreezerQuickAction('betweenFreezers','${f.code}')">このストッカーから移動</button>
+        </div>
+      </div>
+      <div class="freezer-items">${body}</div>
+      <div class="freezer-add-wrap">
+        <button class="freezer-add-btn ${String(f.code).toLowerCase()}" onclick="openFreezerItemModal('${f.code}')">＋ このストッカーに商品追加</button>
+      </div>
+    </div>`;
+  });
+
+  document.getElementById('freezerCount').textContent=`${freezerGroups.length}基準`;
+  document.getElementById('freezerList').innerHTML=freezerGroups.join('') || `<div class="empty">該当する在庫はありません。</div>`;
+}
+function renderAlerts(){
+  // ダッシュボード・KPIと同じ管理対象（visible=true が1つでもある）だけを対象にする
+  const items=buildUnifiedItems(state.items)
+    .filter(i=>FREEZERS.some(f=>getFreezerVisibility(i,f.code)===true))
+    .filter(i=>statusOf(i)!=='ok')
+    .sort((a,b)=>a.name.localeCompare(b.name,'ja'));
+  document.getElementById('alertCount').textContent=`${items.length}件`;
+  document.getElementById('alertList').innerHTML=items.length?items.map(itemCard).join(''):`<div class="empty">現在、アラートはありません。</div>`;
+}
+function renderHistory(){
+  const q=document.getElementById('historySearch')?.value?.trim().toLowerCase()||'', type=document.getElementById('historyType')?.value||'all';
+  let rows=[...state.history].sort((a,b)=>b.time-a.time);
+  rows=rows.filter(h=>{const okQ=!q||h.itemName.toLowerCase().includes(q)||h.user.toLowerCase().includes(q); const okT=type==='all'||h.type===type; return okQ&&okT});
+  document.getElementById('historyCount').textContent=`${rows.length}件`;
+  document.getElementById('historyList').innerHTML=rows.length?rows.map(h=>`<div class="history-card"><div class="history-main">${escapeHtml(h.user)} / ${escapeHtml(h.type)} / ${escapeHtml(h.itemName)} / ${h.qty}${escapeHtml(h.unit)}</div><div class="history-sub">${formatDate(h.time)} / ${escapeHtml(h.from)} → ${escapeHtml(h.to)}</div></div>`).join(''):`<div class="empty">履歴はありません。</div>`;
+}
+function fillItemSelects(){document.getElementById('moveItem').innerHTML=state.items.map(i=>`<option value="${i.id}">${escapeHtml(i.name)}</option>`).join('')}
+
+function makeStoreChecks(selected=[]){
+  const wrap=document.getElementById('storeChecks');
+  wrap.innerHTML=STORES.map(s=>`<button type="button" class="check ${selected.includes(s)?'active':''}" data-store="${s}">${s}</button>`).join('');
+  wrap.querySelectorAll('.check').forEach(btn=>btn.onclick=()=>btn.classList.toggle('active'));
+}
+
+function makeFreezerChecks(selected=[]){
+  const wrap=document.getElementById('freezerChecks');
+  wrap.innerHTML=FREEZERS.map(f=>`<button type="button" class="check ${selected.includes(f.code)?'active':''}" data-freezer="${f.code}">${f.name}</button>`).join('');
+  wrap.querySelectorAll('.check').forEach(btn=>{
+    btn.onclick=()=>{
+      btn.classList.toggle('active');
+      renderInitialStockGrid();
+    };
+  });
+}
+function renderInitialStockGrid(values={}){
+  const wrap=document.getElementById('initialStockGrid');
+  if(!wrap) return;
+  const selected=[...document.querySelectorAll('#freezerChecks .check.active')].map(el=>el.dataset.freezer);
+  wrap.innerHTML=FREEZERS.map(f=>{
+    const enabled=selected.includes(f.code);
+    const value = values[f.code] != null ? values[f.code] : 0;
+    return `<div class="initial-stock-box ${enabled?'':'off'}">
+      <div class="initial-stock-head">
+        <div class="initial-stock-label">${f.name}</div>
+        <div class="mini-note">${enabled?'設定対象':'未選択'}</div>
+      </div>
+      <input class="form-input initial-stock-input" type="number" min="0" max="9999" value="${value}" data-stock-freezer="${f.code}" ${enabled?'':'disabled'}>
+    </div>`;
+  }).join('');
+}
+function openItemModal(){
+  editingItemId=null; currentEditFreezerCode=null; document.getElementById('itemModalTitle').textContent='商品を追加';
+  document.getElementById('itemName').value=''; document.getElementById('itemCategory').value='冷凍食材'; document.getElementById('itemUnit').value='個';
+  document.getElementById('itemMin').value=''; document.getElementById('itemMax').value='';
+  makeStoreChecks([]);
+  makeFreezerChecks([]);
+  renderInitialStockGrid({F1:0,F2:0,F3:0,F4:0});
+  openModal('itemModalWrap');
+}
+// freezerCode を明示的に受け取ることで古い値の残留を防止
+// 省略時は null（ストッカー文脈なし）としてリセット
+function editItem(id, freezerCode=null){
+  const item=state.items.find(i=>i.id===id); if(!item)return;
+  // 呼び出し元に関係なく常に最新のコンテキストで上書き
+  currentEditFreezerCode = freezerCode;
+  editingItemId=id; document.getElementById('itemModalTitle').textContent='商品を編集';
+  document.getElementById('itemName').value=item.name; document.getElementById('itemCategory').value=item.category; document.getElementById('itemUnit').value=item.unit;
+  document.getElementById('itemMin').value=item.min; document.getElementById('itemMax').value=item.max;
+  makeStoreChecks(item.preferredStores||[]);
+  const selectedFreezers = FREEZERS.filter(f => getFreezerVisibility(item, f.code)).map(f => f.code);
+  makeFreezerChecks(selectedFreezers);
+  renderInitialStockGrid(item.freezerStock || {F1:0,F2:0,F3:0,F4:0});
+
+  let removeBtn = document.getElementById('removeFromFreezerInEditBtn');
+  if(!removeBtn){
+    const actions = document.querySelector('#itemModalWrap .modal-actions');
+    removeBtn = document.createElement('button');
+    removeBtn.id = 'removeFromFreezerInEditBtn';
+    removeBtn.className = 'danger';
+    removeBtn.type = 'button';
+    removeBtn.onclick = removeItemFromCurrentEditFreezer;
+    actions.insertBefore(removeBtn, actions.firstChild);
+  }
+
+  if(currentEditFreezerCode){
+    removeBtn.style.display = '';
+    removeBtn.textContent = `${freezerName(currentEditFreezerCode)}から外す`;
+  } else {
+    removeBtn.style.display = 'none';
+  }
+
+  openModal('itemModalWrap');
+}
+async function saveItem(){
+  if(state.user.role==='オーナー'){alert('オーナー権限では商品登録・編集はできません。'); return}
+  const name=document.getElementById('itemName').value.trim(),
+        category=document.getElementById('itemCategory').value,
+        unit=document.getElementById('itemUnit').value;
+  const min=Number(document.getElementById('itemMin').value||0),
+        max=Number(document.getElementById('itemMax').value||0),
+        preferredStores=[...document.querySelectorAll('#storeChecks .check.active')].map(el=>el.dataset.store),
+        selectedFreezers=[...document.querySelectorAll('#freezerChecks .check.active')].map(el=>el.dataset.freezer);
+
+  if(!name){alert('商品名を入力してください。'); return}
+  if(max<min){alert('最大在庫数は最低在庫数以上にしてください。'); return}
+
+  const initialStocks = {F1:0,F2:0,F3:0,F4:0};
+  document.querySelectorAll('[data-stock-freezer]').forEach(input=>{
+    const code=input.dataset.stockFreezer;
+    const val=Number(input.value||0);
+    initialStocks[code]=Number.isFinite(val) && val >= 0 ? val : 0;
+  });
+
+  let item;
+  if(editingItemId){
+    item=state.items.find(i=>i.id===editingItemId); if(!item)return;
+    item.name=name; item.category=category; item.unit=unit; item.min=min; item.max=max; item.preferredStores=preferredStores;
+    if(!item.visibleInFreezers) item.visibleInFreezers={F1:false,F2:false,F3:false,F4:false};
+    if(!item.freezerStock) item.freezerStock={F1:0,F2:0,F3:0,F4:0};
+
+    // 重複チェック＋選択解除ガード（在庫残りのまま外せない）
+    for (const f of FREEZERS){
+      const selected = selectedFreezers.includes(f.code);
+      const wasSelected = getFreezerVisibility(item, f.code);
+      if(selected){
+        const duplicate = findSameNamedItemInFreezer(name, f.code, item.id);
+        if(duplicate){
+          alert(`同じ商品名「${name}」がすでに ${freezerName(f.code)} に登録されています。商品名または登録先を見直してください。`);
+          return;
+        }
+      }
+      // 在庫が残っているストッカーの選択を外そうとした場合はブロック
+      if(!selected && wasSelected && Number(item.freezerStock[f.code] || 0) > 0){
+        alert(`${freezerName(f.code)} に在庫が ${item.freezerStock[f.code]}${item.unit} 残っているため、選択を外せません。先に在庫を0にしてください。`);
+        return;
+      }
+    }
+
+    FREEZERS.forEach(f=>{
+      const selected = selectedFreezers.includes(f.code);
+      setFreezerVisibility(item, f.code, selected);
+      if(selected){
+        item.freezerStock[f.code] = initialStocks[f.code];
+      }
+    });
+
+    addHistory('商品編集', item, 0, '設定', '設定');
+    if(isCloudReady()){ try{ await cloudUpsertItem(item); await cloudReplaceFreezerStock(item); await cloudPushLatestHistory(state.history[0]); } catch(err){ console.error(err); alert('クラウド保存に失敗しました: '+(err.message||err)); return; } }
+  }else{
+    item={
+      id:'i'+Date.now(),
+      name,category,unit,min,max,preferredStores,usageCount:0,
+      freezerStock:{F1:0,F2:0,F3:0,F4:0},
+      visibleInFreezers:{F1:false,F2:false,F3:false,F4:false},
+      storeMoved:{'神楽坂':0,'男マエ食道':0,'深夜食道':0}
+    };
+
+    // 新規商品の重複チェック（編集時と同様に）
+    for(const f of FREEZERS){
+      if(selectedFreezers.includes(f.code)){
+        const dup=findSameNamedItemInFreezer(name, f.code, null);
+        if(dup){
+          alert(`同じ商品名「${name}」がすでに ${freezerName(f.code)} に登録されています。商品名または登録先を見直してください。`);
+          return;
+        }
+      }
+    }
+
+    FREEZERS.forEach(f=>{
+      const selected = selectedFreezers.includes(f.code);
+      setFreezerVisibility(item, f.code, selected);
+      if(selected){
+        item.freezerStock[f.code] = initialStocks[f.code];
+      }
+    });
+
+    state.items.unshift(item);
+    addHistory('商品追加', item, 0, '設定', '設定');
+    if(isCloudReady()){ try{ await cloudUpsertItem(item); await cloudReplaceFreezerStock(item); await cloudPushLatestHistory(state.history[0]); } catch(err){ console.error(err); alert('クラウド保存に失敗しました: '+(err.message||err)); return; } }
+  }
+  closeModal('itemModalWrap'); render(); toast('✓ 商品を保存しました');
+}
+function addHistory(type,item,qty,from,to,user){
+  state.history.unshift({id:'h'+Date.now()+Math.random().toString(16).slice(2),type,user:user||state.user.name||'未設定',itemId:item.id,itemName:item.name,qty:Number(qty||0),unit:item.unit,from,to,time:Date.now()});
+  state.history=state.history.slice(0,300);
+}
+function openFreezerQuickAction(mode, freezerCode){
+  // 対象ストッカーに visible=true の商品を優先して事前選択する
+  const firstVisible = state.items.find(i => getFreezerVisibility(i, freezerCode) === true);
+  prefillItemId = firstVisible?.id || state.items[0]?.id || null;
+  prefillFreezerCode = freezerCode;
+  openMoveModal(mode, { freezerCode });
+}
+
+
+let currentEditFreezerCode = null;
+
+function toggleItemMenu(menuId){
+  document.querySelectorAll('.item-menu-panel.open').forEach(el=>{
+    if(el.id !== menuId) el.classList.remove('open');
+  });
+  const panel = document.getElementById(menuId);
+  if(panel) panel.classList.toggle('open');
+}
+
+function closeAllItemMenus(){
+  document.querySelectorAll('.item-menu-panel.open').forEach(el=>el.classList.remove('open'));
+}
+
+function openEditItemFromFreezer(itemId, freezerCode){
+  closeAllItemMenus();
+  editItem(itemId, freezerCode);  // freezerCode を editItem に渡して一元管理
+}
+
+function removeItemFromCurrentEditFreezer(){
+  if(!editingItemId || !currentEditFreezerCode){
+    alert('対象ストッカーが選択されていません。');
+    return;
+  }
+  closeModal('itemModalWrap');
+  removeItemFromFreezerByName(
+    (state.items.find(i => i.id === editingItemId)?.name || ''),
+    currentEditFreezerCode
+  );
+}
+
+function openContextMoveModal(mode,itemId,freezerCode){
+  prefillItemId=itemId;
+  prefillFreezerCode=freezerCode;
+  openMoveModal(mode, {itemId, freezerCode});
+}
+
+function openMoveModal(mode, context={}){
+  if(state.user.role==='オーナー'){alert('オーナー権限では在庫操作はできません。'); return}
+  moveMode=mode;
+  const itemId=context.itemId || prefillItemId || state.items[0]?.id || '';
+  const freezerCode=context.freezerCode || prefillFreezerCode;
+  document.getElementById('moveQty').value=1;
+  document.getElementById('moveUser').value=state.user.name||'';
+  document.getElementById('moveMemo').value='';
+  const from=document.getElementById('moveFrom'), to=document.getElementById('moveTo');
+  fillItemSelects();
+  document.getElementById('moveItem').value=itemId || document.getElementById('moveItem').value;
+  const selectedItem=state.items.find(i=>i.id===(itemId || document.getElementById('moveItem').value));
+  const currentQty=selectedItem && freezerCode ? Number(selectedItem.freezerStock[freezerCode]||0) : null;
+
+  if(mode==='inbound'){
+    document.getElementById('moveModalTitle').textContent='入庫';
+    from.innerHTML='<option value="仕入れ">仕入れ</option>';
+    to.innerHTML=FREEZERS.map(f=>`<option value="${f.code}" ${freezerCode===f.code?'selected':''}>${f.name}</option>`).join('');
+    document.getElementById('moveHelp').textContent='入庫では、仕入れからどのストッカーへ入れたかを記録します。';
+  }else if(mode==='toStore'){
+    document.getElementById('moveModalTitle').textContent='店舗補充';
+    from.innerHTML=FREEZERS.map(f=>`<option value="${f.code}" ${freezerCode===f.code?'selected':''}>${f.name}</option>`).join('');
+    to.innerHTML=STORES.map(s=>`<option value="${s}">${s}</option>`).join('');
+    document.getElementById('moveHelp').textContent='補充先の店舗は必須です。履歴に「どのストッカーから、どの店舗へ出したか」が残ります。';
+  }else{
+    document.getElementById('moveModalTitle').textContent='ストッカー間移動';
+    from.innerHTML=FREEZERS.map(f=>`<option value="${f.code}" ${freezerCode===f.code?'selected':''}>${f.name}</option>`).join('');
+    to.innerHTML=FREEZERS.map(f=>`<option value="${f.code}">${f.name}</option>`).join('');
+    document.getElementById('moveHelp').textContent='同じストッカー同士は選べません。';
+  }
+
+  const itemName=selectedItem ? selectedItem.name : '商品を選択';
+  const freezerLabel=freezerCode ? freezerName(freezerCode) : '未選択';
+  const qtyText=currentQty==null ? '' : ` / 現在在庫 ${currentQty}${selectedItem.unit}`;
+  document.getElementById('moveContextText').textContent=`商品: ${itemName} / 対象: ${freezerLabel}${qtyText}`;
+  openModal('moveModalWrap');
+}
+async function submitMove(){
+  const itemId=document.getElementById('moveItem').value,
+        item=state.items.find(i=>i.id===itemId),
+        qty=Number(document.getElementById('moveQty').value||0),
+        user=document.getElementById('moveUser').value.trim()||state.user.name,
+        from=document.getElementById('moveFrom').value,
+        to=document.getElementById('moveTo').value,
+        memo=document.getElementById('moveMemo').value.trim();
+  if(!item){alert('商品を選択してください。'); return}
+  if(!item.visibleInFreezers) item.visibleInFreezers = {F1:false,F2:false,F3:false,F4:false};
+  if(!qty||qty<1){alert('数量は1以上で入力してください。'); return}
+  if(qty>9999){alert('数量の上限を超えています。'); return}
+
+  let historyType='', fromLabel='', toLabel='', confirmText='';
+
+  if(moveMode==='inbound'){
+    fromLabel='仕入れ'; toLabel=freezerName(to);
+    confirmText=`${item.name}を${toLabel}へ${qty}${item.unit}入庫します。よろしいですか？`;
+    if(!confirm(confirmText)) return;
+    item.freezerStock[to]=Number(item.freezerStock[to]||0)+qty;
+    setFreezerVisibility(item, to, true);
+    item.usageCount=Number(item.usageCount||0)+1;
+    historyType='入庫';
+    addHistory(historyType,item,qty,fromLabel,toLabel,user + (memo ? `（${memo}）` : ''));
+  }
+  if(moveMode==='toStore'){
+    if((Number(item.freezerStock[from]||0))<qty){alert('移動元ストッカーの在庫が不足しています。'); return}
+    fromLabel=freezerName(from); toLabel=to;
+    confirmText=`${item.name}を${fromLabel}から${toLabel}へ${qty}${item.unit}補充します。よろしいですか？`;
+    if(!confirm(confirmText)) return;
+    item.freezerStock[from]=Number(item.freezerStock[from]||0)-qty;
+    item.storeMoved[to]=Number(item.storeMoved[to]||0)+qty;
+    item.usageCount=Number(item.usageCount||0)+1;
+    historyType='店舗補充';
+    addHistory(historyType,item,qty,fromLabel,toLabel,user + (memo ? `（${memo}）` : ''));
+  }
+  if(moveMode==='betweenFreezers'){
+    if(from===to){alert('移動元と移動先は別のストッカーを選んでください。'); return}
+    if((Number(item.freezerStock[from]||0))<qty){alert('移動元ストッカーの在庫が不足しています。'); return}
+    fromLabel=freezerName(from); toLabel=freezerName(to);
+    confirmText=`${item.name}を${fromLabel}から${toLabel}へ${qty}${item.unit}移動します。よろしいですか？`;
+    if(!confirm(confirmText)) return;
+    item.freezerStock[from]=Number(item.freezerStock[from]||0)-qty;
+    item.freezerStock[to]=Number(item.freezerStock[to]||0)+qty;
+    setFreezerVisibility(item, to, true);
+    item.usageCount=Number(item.usageCount||0)+1;
+    historyType='ストッカー移動';
+    addHistory(historyType,item,qty,fromLabel,toLabel,user + (memo ? `（${memo}）` : ''));
+  }
+
+  if(isCloudReady()){
+    try{
+      await cloudUpsertItem(item);
+      await cloudReplaceFreezerStock(item);
+      await cloudPushLatestHistory(state.history[0]);
+      await reloadAllFromSupabase(false);
+    }catch(err){
+      console.error(err);
+      alert('クラウド保存に失敗しました: ' + (err.message||err));
+      return;
+    }
+  }
+
+  closeModal('moveModalWrap');
+  render();
+  toast('✓ 在庫操作を保存しました');
+}
+function saveUserSettings(){
+  const name=document.getElementById('userNameInput').value.trim(), role=document.getElementById('userRoleInput').value;
+  if(!name){alert('利用者名を入力してください。'); return} if(!ROLES.includes(role)){alert('権限が不正です。'); return}
+  state.user={name,role}; render(); if(isCloudReady()) upsertMyProfile().catch(console.error); alert('利用者設定を保存しました。');
+}
+async function resetAll(){
+  if(!confirm('すべてのデータを初期状態に戻します。よろしいですか？')) return;
+  state=JSON.parse(JSON.stringify(initialState)); render();
+  if(isCloudReady()){
+    try{
+      await cloudReplaceAllFromLocal();
+      await reloadAllFromSupabase(false);
+    }catch(err){console.error(err); alert('クラウド同期に失敗しました: '+(err.message||err))}
+  }
+}
+
+/* ==== Supabase ==== */
+async function connectSupabase(){
+  const url=document.getElementById('cloudUrl').value.trim(), anonKey=document.getElementById('cloudAnonKey').value.trim(),
+        email=document.getElementById('cloudEmail').value.trim(), password=document.getElementById('cloudPassword').value.trim();
+  if(!url||!anonKey||!email||!password){alert('Supabase URL / Anon Key / メール / パスワードを入力してください。'); return}
+  try{
+    supabaseClient=window.supabase.createClient(url, anonKey);
+    const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
+    if(error) throw error;
+    currentAuthUser=data.user; cloudEnabled=true;
+    saveCloudConfig({url,anonKey,email,password});
+    await upsertMyProfile();
+    await ensureCloudSeed();
+    await reloadAllFromSupabase(false);
+    await checkSchemaVersion();  // スキーマ確認
+    updateSyncStatus('接続中: '+email, true);
+    closeModal('cloudModalWrap');
+    toast('☁ Supabase に接続しました');
+  }catch(err){
+    console.error(err); cloudEnabled=false; updateSyncStatus('接続失敗');
+    alert('接続に失敗しました: '+(err.message||err));
+  }
+}
+
+// ---- スキーマバージョンチェック ----
+// visible_in_freezers カラムの有無を確認し、未追加なら設定画面に案内を表示する
+async function checkSchemaVersion(){
+  if(!isCloudReady()) return;
+  const box = document.getElementById('schemaMigrationBox');
+  if(!box) return;
+  try{
+    const {error} = await supabaseClient.from('rooftop_items').select('visible_in_freezers').limit(1);
+    if(error && (error.code === '42703' || String(error.message||'').toLowerCase().includes('visible_in_freezers'))){
+      // カラムが存在しない
+      box.style.display = '';
+      // 設定タブへ誘導するトーストを表示
+      toast('⚠️ スキーマ更新が必要です（設定 → 確認）');
+    }else{
+      // カラムが存在する（もしくはエラーが別の原因）
+      box.style.display = 'none';
+    }
+  }catch(e){
+    console.warn('checkSchemaVersion:', e);
+  }
+}
+
+function copyMigrationSql(){
+  const el = document.getElementById('migrationSql');
+  if(!el) return;
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(el.value)
+      .then(()=>toast('✓ SQLをコピーしました'))
+      .catch(()=>{ el.select(); document.execCommand('copy'); toast('✓ SQLをコピーしました'); });
+  }else{
+    el.select(); document.execCommand('copy'); toast('✓ SQLをコピーしました');
+  }
+}
+
+async function tryAutoConnectSupabase(){
+  const cfg=cloudConfig(); if(!cfg.url||!cfg.anonKey) return;
+  try{
+    supabaseClient=window.supabase.createClient(cfg.url, cfg.anonKey);
+    const {data}=await supabaseClient.auth.getSession();
+    if(data?.session?.user){
+      currentAuthUser=data.session.user; cloudEnabled=true;
+      await upsertMyProfile(); await ensureCloudSeed(); await reloadAllFromSupabase(false);
+      await checkSchemaVersion();
+      updateSyncStatus('接続中: '+(cfg.email||currentAuthUser.email||'logged-in'), true); return;
+    }
+    if(cfg.email&&cfg.password){
+      const {data:loginData,error:loginError}=await supabaseClient.auth.signInWithPassword({email:cfg.email,password:cfg.password});
+      if(loginError) throw loginError;
+      currentAuthUser=loginData.user; cloudEnabled=true;
+      await upsertMyProfile(); await ensureCloudSeed(); await reloadAllFromSupabase(false);
+      await checkSchemaVersion();
+      updateSyncStatus('接続中: '+(cfg.email||currentAuthUser.email||'logged-in'), true);
+    }else updateSyncStatus('設定済み（再ログイン待ち）');
+  }catch(err){console.error(err); updateSyncStatus('接続失敗')}
+}
+async function upsertMyProfile(){
+  if(!supabaseClient||!currentAuthUser) return;
+  await supabaseClient.from('profiles').upsert({id:currentAuthUser.id, display_name:state.user.name||currentAuthUser.email?.split('@')[0]||'staff'});
+}
+async function ensureCloudSeed(){
+  if(!isCloudReady()) return;
+  const {count,error}=await supabaseClient.from('rooftop_items').select('*',{count:'exact',head:true});
+  if(error) throw error;
+  if((count||0)===0) await cloudReplaceAllFromLocal();
+}
+async function cloudReplaceAllFromLocal(){
+  if(!isCloudReady()) return;
+  const itemIds=state.items.map(i=>i.id);
+  if(itemIds.length){
+    await supabaseClient.from('rooftop_freezer_stock').delete().in('item_id', itemIds);
+    await supabaseClient.from('rooftop_items').upsert(state.items.map(item=>cloudItemRow(item)));
+  }else{
+    await supabaseClient.from('rooftop_freezer_stock').delete().neq('item_id','');
+  }
+  for(const item of state.items){
+    await cloudReplaceFreezerStock(item);
+  }
+  await supabaseClient.from('rooftop_history').delete().gte('created_at','1900-01-01');
+  if(state.history.length){
+    await supabaseClient.from('rooftop_history').insert(state.history.map(h=>cloudHistoryRow(h)));
+  }
+}
+function cloudItemRow(item){
+  return {
+    id:item.id,name:item.name,category:item.category,unit:item.unit,
+    min_stock:item.min,max_stock:item.max,
+    preferred_stores:item.preferredStores||[],
+    usage_count:item.usageCount||0,
+    is_active:true,
+    // visibleInFreezers をクラウド側にも保存（別端末でも hidden 状態を再現するため）
+    visible_in_freezers: item.visibleInFreezers || {F1:false,F2:false,F3:false,F4:false}
+  };
+}
+async function cloudUpsertItem(item){
+  const {error}=await supabaseClient.from('rooftop_items').upsert(cloudItemRow(item));
+  if(error) throw error;
+}
+async function cloudReplaceFreezerStock(item){
+  const {error:delError}=await supabaseClient.from('rooftop_freezer_stock').delete().eq('item_id', item.id);
+  if(delError) throw delError;
+  const rows=FREEZERS.map(f=>({item_id:item.id,freezer_code:f.code,quantity:Number(item.freezerStock[f.code]||0)}));
+  const {error:insError}=await supabaseClient.from('rooftop_freezer_stock').insert(rows);
+  if(insError) throw insError;
+}
+function cloudHistoryRow(h){
+  const map={'入庫':'inbound','店舗補充':'to_store','ストッカー移動':'between_freezers','商品追加':'item_created','ストッカーへ商品追加':'item_added_to_freezer','ストッカーから商品削除':'item_removed_from_freezer','商品編集':'item_updated'};
+  return {id:h.id,action_type:map[h.type]||h.type,acted_by_name:h.user,item_id:h.itemId,item_name_snapshot:h.itemName,quantity:h.qty,unit:h.unit,from_scope:h.from,to_scope:h.to,created_at:new Date(h.time).toISOString()};
+}
+async function cloudPushLatestHistory(h){
+  if(!h) return;
+  const {error}=await supabaseClient.from('rooftop_history').upsert(cloudHistoryRow(h));
+  if(error) throw error;
+}
+async function reloadAllFromSupabase(showToast=true){
+  if(!isCloudReady()){ if(showToast) alert('Supabase未接続です。'); return; }
+  try{
+    updateSyncStatus('同期中...');
+    const [itemsRes, stockRes, historyRes]=await Promise.all([
+      supabaseClient.from('rooftop_items').select('*').eq('is_active', true).order('name'),
+      supabaseClient.from('rooftop_freezer_stock').select('*'),
+      supabaseClient.from('rooftop_history').select('*').order('created_at',{ascending:false}).limit(300)
+    ]);
+    if(itemsRes.error) throw itemsRes.error;
+    if(stockRes.error) throw stockRes.error;
+    if(historyRes.error) throw historyRes.error;
+
+    const stockMap={};
+    (stockRes.data||[]).forEach(r=>{
+      if(!stockMap[r.item_id]) stockMap[r.item_id]={F1:0,F2:0,F3:0,F4:0};
+      stockMap[r.item_id][r.freezer_code]=Number(r.quantity||0);
+    });
+
+    const prevStoreMoved=Object.fromEntries(state.items.map(i=>[i.id, i.storeMoved||{'神楽坂':0,'男マエ食道':0,'深夜食道':0}]));
+    const prevVisibility=Object.fromEntries(state.items.map(i=>[i.id, i.visibleInFreezers||null]));
+    state.items=(itemsRes.data||[]).map(r=>({
+      id:r.id,name:r.name,category:r.category,unit:r.unit,min:Number(r.min_stock||0),max:Number(r.max_stock||0),
+      preferredStores:Array.isArray(r.preferred_stores)?r.preferred_stores:[], usageCount:Number(r.usage_count||0),
+      freezerStock:stockMap[r.id]||{F1:0,F2:0,F3:0,F4:0},
+      // 優先順位: ① クラウドのvisible_in_freezers ② ローカルのprevVisibility ③ 在庫から推論
+      visibleInFreezers: inferVisibleInFreezers(r.id, stockMap, r.visible_in_freezers || prevVisibility[r.id]),
+      storeMoved:prevStoreMoved[r.id]||{'神楽坂':0,'男マエ食道':0,'深夜食道':0}
+    }));
+
+    state.history=(historyRes.data||[]).map(r=>({
+      id:r.id,
+      type:({'inbound':'入庫','to_store':'店舗補充','between_freezers':'ストッカー移動','item_created':'商品追加','item_added_to_freezer':'ストッカーへ商品追加','item_removed_from_freezer':'ストッカーから商品削除','item_updated':'商品編集'})[r.action_type]||r.action_type,
+      user:r.acted_by_name||'未設定', itemId:r.item_id, itemName:r.item_name_snapshot||'不明商品', qty:Number(r.quantity||0), unit:r.unit||'個',
+      from:r.from_scope||'', to:r.to_scope||'', time:new Date(r.created_at).getTime()
+    }));
+    saveState(); rerenderAllViews();
+    updateSyncStatus('接続中: '+(cloudConfig().email||currentAuthUser?.email||'cloud'), true);
+    if(showToast) toast('☁ クラウド同期しました');
+  }catch(err){
+    console.error(err); updateSyncStatus('同期失敗'); if(showToast) alert('同期に失敗しました: '+(err.message||err));
+  }
+}
+
+function fillExistingItemOptions(targetFreezerCode){
+  const select = document.getElementById('existingItemSelect');
+  const items = state.items.filter(item => !(item.visibleInFreezers && item.visibleInFreezers[targetFreezerCode]));
+  select.innerHTML = items.length
+    ? items.map(item => `<option value="${item.id}">${escapeHtml(item.name)}</option>`).join('')
+    : '<option value="">追加できる既存商品がありません</option>';
+}
+function openFreezerItemModal(freezerCode){
+  currentFreezerContext = freezerCode;
+  document.getElementById('freezerItemModalTitle').textContent = 'このストッカーに商品追加';
+  document.getElementById('freezerItemContext').textContent = `${freezerName(freezerCode)} に表示する商品を追加します。`;
+  document.getElementById('freezerItemMode').value = 'existing';
+  document.getElementById('existingItemSection').style.display = '';
+  document.getElementById('newItemSection').style.display = 'none';
+  document.getElementById('freezerItemTarget').innerHTML = FREEZERS.map(f => `<option value="${f.code}" ${f.code===freezerCode?'selected':''}>${f.name}</option>`).join('');
+  document.getElementById('freezerItemInitialQty').value = 0;
+  document.getElementById('freezerItemVisibleFlag').value = 'true';
+  document.getElementById('newFreezerItemName').value = '';
+  document.getElementById('newFreezerItemCategory').value = '冷凍食材';
+  document.getElementById('newFreezerItemUnit').value = '個';
+  document.getElementById('newFreezerItemMin').value = '';
+  document.getElementById('newFreezerItemMax').value = '';
+  fillExistingItemOptions(freezerCode);
+  openModal('freezerItemModalWrap');
+}
+function submitFreezerItemModal(){
+  if(state.user.role === 'オーナー'){
+    alert('オーナー権限では商品追加できません。');
+    return;
+  }
+  const mode = document.getElementById('freezerItemMode').value;
+  const freezerCode = document.getElementById('freezerItemTarget').value;
+  const initialQty = Number(document.getElementById('freezerItemInitialQty').value || 0);
+  const visibleFlag = document.getElementById('freezerItemVisibleFlag').value === 'true';
+
+  if(initialQty < 0 || initialQty > 9999){
+    alert('初期数量を確認してください。');
+    return;
+  }
+
+  let item = null;
+
+  if(mode === 'existing'){
+    const itemId = document.getElementById('existingItemSelect').value;
+    item = state.items.find(i => i.id === itemId);
+    if(!item){
+      alert('既存商品を選択してください。');
+      return;
+    }
+    const duplicate = findSameNamedItemInFreezer(item.name, freezerCode, item.id);
+    if(duplicate){
+      alert(`同じ商品名「${item.name}」がすでに ${freezerName(freezerCode)} に登録されています。重複登録はできません。`);
+      return;
+    }
+    if(!item.visibleInFreezers) item.visibleInFreezers = {F1:false,F2:false,F3:false,F4:false};
+    setFreezerVisibility(item, freezerCode, true);
+    item.freezerStock[freezerCode] = Number(item.freezerStock[freezerCode] || 0) + initialQty;
+    addHistory('ストッカーへ商品追加', item, initialQty, '設定', freezerName(freezerCode), state.user.name);
+  } else {
+    const name = document.getElementById('newFreezerItemName').value.trim();
+    const category = document.getElementById('newFreezerItemCategory').value;
+    const unit = document.getElementById('newFreezerItemUnit').value;
+    const min = Number(document.getElementById('newFreezerItemMin').value || 0);
+    const max = Number(document.getElementById('newFreezerItemMax').value || 0);
+    if(!name){
+      alert('商品名を入力してください。');
+      return;
+    }
+    if(max < min){
+      alert('最大在庫数は最低在庫数以上にしてください。');
+      return;
+    }
+    const duplicate = findSameNamedItemInFreezer(name, freezerCode, null);
+    if(duplicate){
+      alert(`同じ商品名「${name}」がすでに ${freezerName(freezerCode)} に登録されています。重複登録はできません。`);
+      return;
+    }
+    item = {
+      id:'i'+Date.now(),
+      name, category, unit, min, max,
+      preferredStores: [],
+      usageCount: 0,
+      freezerStock: {F1:0,F2:0,F3:0,F4:0},
+      visibleInFreezers: {F1:false,F2:false,F3:false,F4:false},
+      storeMoved: {'神楽坂':0,'男マエ食道':0,'深夜食道':0}
+    };
+    setFreezerVisibility(item, freezerCode, true);
+    item.freezerStock[freezerCode] = initialQty;
+    state.items.unshift(item);
+    addHistory('商品追加', item, 0, '設定', '設定', state.user.name);
+    addHistory('ストッカーへ商品追加', item, initialQty, '設定', freezerName(freezerCode), state.user.name);
+  }
+
+  saveState();
+  if(isCloudReady()){
+    // 新規登録時は「商品追加」「ストッカーへ商品追加」の2件を両方クラウドへ保存
+    const historyToSave = mode === 'new'
+      ? [state.history[0], state.history[1]].filter(Boolean)  // [ストッカーへ商品追加, 商品追加]
+      : [state.history[0]];                                    // [ストッカーへ商品追加]
+    Promise.resolve()
+      .then(() => cloudUpsertItem(item))
+      .then(() => cloudReplaceFreezerStock(item))
+      .then(() => Promise.all(historyToSave.map(h => cloudPushLatestHistory(h))))
+      .catch(err => {
+        console.error(err);
+        alert('クラウド保存に失敗しました: ' + (err.message || err));
+      });
+  }
+  closeModal('freezerItemModalWrap');
+  render();
+  toast('✓ ストッカーに商品を追加しました');
+}
+function removeItemFromFreezerByName(itemName, freezerCode){
+  const normalized = String(itemName || '').trim().toLowerCase();
+  const targets = state.items.filter(item =>
+    String(item.name || '').trim().toLowerCase() === normalized &&
+    getFreezerVisibility(item, freezerCode) === true
+  );
+  if(!targets.length) return;
+
+  const totalQty = targets.reduce((sum, item) => sum + Number(item.freezerStock?.[freezerCode] || 0), 0);
+  if(state.user.role === 'オーナー'){
+    alert('オーナー権限では削除できません。');
+    return;
+  }
+  if(Number(totalQty) > 0){
+    alert('在庫が残っているため外せません。先に在庫を0にしてください。');
+    return;
+  }
+  if(!confirm(`${itemName} を ${freezerName(freezerCode)} の表示対象から外します。よろしいですか？`)){
+    return;
+  }
+  targets.forEach(item => setFreezerVisibility(item, freezerCode, false));
+  addHistory('ストッカーから商品削除', targets[0], 0, freezerName(freezerCode), '表示対象から外す', state.user.name);
+  saveState();
+  render();
+  if(isCloudReady()){
+    Promise.resolve()
+      .then(() => Promise.all(targets.map(item => cloudUpsertItem(item).then(() => cloudReplaceFreezerStock(item)))))
+      .then(() => cloudPushLatestHistory(state.history[0]))
+      .catch(err => {
+        console.error(err);
+        alert('クラウド保存に失敗しました: ' + (err.message || err));
+      });
+  }
+  toast('✓ このストッカーから外しました');
+}
+
+function removeItemFromFreezer(itemId, freezerCode){
+  const item = state.items.find(i => i.id === itemId);
+  if(!item) return;
+  if(state.user.role === 'オーナー'){
+    alert('オーナー権限では削除できません。');
+    return;
+  }
+  if(state.user.role === '担当者' && Number(item.freezerStock[freezerCode] || 0) > 0){
+    alert('在庫が残っている商品は外せません。先に在庫を0にしてください。');
+    return;
+  }
+  if(Number(item.freezerStock[freezerCode] || 0) > 0){
+    alert('在庫が残っているため外せません。先に在庫を0にしてください。');
+    return;
+  }
+  if(!confirm(`${item.name} を ${freezerName(freezerCode)} の表示対象から外します。よろしいですか？`)){
+    return;
+  }
+  setFreezerVisibility(item, freezerCode, false);
+  addHistory('ストッカーから商品削除', item, 0, freezerName(freezerCode), '表示対象から外す', state.user.name);
+  saveState();
+  render();
+  if(isCloudReady()){
+    Promise.resolve()
+      .then(() => cloudUpsertItem(item))
+      .then(() => cloudReplaceFreezerStock(item))
+      .then(() => cloudPushLatestHistory(state.history[0]))
+      .catch(err => {
+        console.error(err);
+        alert('クラウド保存に失敗しました: ' + (err.message || err));
+      });
+  }
+  toast('✓ このストッカーから外しました');
+}
+
+/* ==== events ==== */
+document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); btn.classList.add('active'); const tab=btn.dataset.tab; document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.getElementById('view-'+tab).classList.add('active')}));
+document.getElementById('searchDashboard').addEventListener('input',renderDashboard);
+document.getElementById('sortDashboard').addEventListener('change',renderDashboard);
+document.getElementById('stockViewMode').addEventListener('change',renderFreezers);
+document.getElementById('freezerFilter').addEventListener('change',renderFreezers);
+document.getElementById('searchFreezer').addEventListener('input',renderFreezers);
+document.getElementById('historySearch').addEventListener('input',renderHistory);
+document.getElementById('historyType').addEventListener('change',renderHistory);
+document.getElementById('freezerItemMode').addEventListener('change', (e) => {
+  const mode = e.target.value;
+  document.getElementById('existingItemSection').style.display = mode === 'existing' ? '' : 'none';
+  document.getElementById('newItemSection').style.display = mode === 'new' ? '' : 'none';
+});
+document.getElementById('freezerItemTarget').addEventListener('change', (e) => {
+  fillExistingItemOptions(e.target.value);
+});
+document.querySelectorAll('.modal-wrap').forEach(wrap=>wrap.addEventListener('click',e=>{if(e.target===wrap) wrap.classList.remove('open')}));
+
+document.addEventListener('click', (e) => {
+  if(!e.target.closest('.item-menu-wrap')) closeAllItemMenus();
+});
+
+render();
+tryAutoConnectSupabase();
+</script>
+</body>
+</html>
