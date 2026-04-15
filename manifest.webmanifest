@@ -1,7 +1,6 @@
 {
   "name": "屋上冷凍ストッカー在庫管理",
   "short_name": "屋上在庫管理",
-  "description": "屋上冷凍ストッカー①〜④の在庫を一元管理するアプリ",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
